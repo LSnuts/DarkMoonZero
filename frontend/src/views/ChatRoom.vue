@@ -1,7 +1,11 @@
+<!-- 暗月零点 - 聊天室页面 -->
+<!-- 实时 WebSocket 聊天界面，显示消息历史和在线状态 -->
+
 <template>
   <div class="chat">
     <div class="chat-bg"></div>
 
+    <!-- 顶部栏：连接状态、用户名、离开按钮 -->
     <header class="chat-header">
       <div class="header-left">
         <div class="status-dot" :class="{ connected: chat.isConnected }"></div>
@@ -17,20 +21,25 @@
       </div>
     </header>
 
+    <!-- 消息列表 -->
     <div class="messages" ref="messagesRef">
       <template v-for="(msg, i) in chat.messages" :key="i">
+        <!-- 系统消息居中显示 -->
         <div v-if="msg.type === 'system'" class="system-msg">{{ msg.content }}</div>
+        <!-- 聊天气泡 -->
         <div v-else class="bubble" :class="{ own: msg.display_name === chat.displayName }" :style="{ borderLeftColor: getDrinkColor(msg.display_name) }">
           <div class="bubble-name" :style="{ color: getDrinkColor(msg.display_name) }">{{ msg.display_name }}</div>
           <div class="bubble-content">{{ msg.content }}</div>
         </div>
       </template>
+      <!-- 空状态提示 -->
       <div v-if="chat.messages.length === 0" class="empty-hint">
         <p>夜晚才刚刚开始……</p>
         <p class="empty-sub">来打个招呼吧</p>
       </div>
     </div>
 
+    <!-- 输入区域 -->
     <div class="input-area">
       <div class="input-wrapper">
         <input
@@ -57,10 +66,11 @@ import { useChatStore } from '../stores/chat'
 const router = useRouter()
 const chat = useChatStore()
 
-const inputText = ref('')
-const messagesRef = ref(null)
-const inputRef = ref(null)
+const inputText = ref('')       // 输入框内容
+const messagesRef = ref(null)   // 消息容器 DOM 引用
+const inputRef = ref(null)      // 输入框 DOM 引用
 
+// 页面挂载时检查会话信息，若缺失则跳回首页
 onMounted(() => {
   if (!chat.sessionId || !chat.displayName) {
     router.push('/')
@@ -70,9 +80,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // don't reset here - let the user explicitly leave
+  // 不在此处重置——让用户显式点击离开按钮
 })
 
+// 发送聊天消息
 function send() {
   const text = inputText.value.trim()
   if (!text) return
@@ -81,17 +92,20 @@ function send() {
   nextTick(() => inputRef.value?.focus())
 }
 
+// 离开聊天室：发送离开消息、重置状态、返回首页
 async function leaveAndGoBack() {
   await chat.leaveChat()
   chat.reset()
   router.push('/')
 }
 
+// 根据显示名获取对应的酒颜色
 function getDrinkColor(displayName) {
   if (displayName === chat.displayName) return chat.drinkColor || '#d4c4a0'
   return '#b8a888'
 }
 
+// 监听消息数量变化，自动滚动到底部
 watch(() => chat.messages.length, async () => {
   await nextTick()
   if (messagesRef.value) {

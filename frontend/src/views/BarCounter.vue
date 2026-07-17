@@ -1,13 +1,18 @@
+<!-- 暗月零点 - 酒柜页面 -->
+<!-- 展示酒单，支持选酒和调和，确认后进入聊天室 -->
+
 <template>
   <div class="bar">
     <div class="bar-bg"></div>
 
+    <!-- 顶部导航栏 -->
     <header class="bar-header">
       <button class="back-btn" @click="goBack">← 退出</button>
       <h2 class="bar-title">酒 柜</h2>
       <span class="bar-subtitle">选一杯今夜属于你的酒</span>
     </header>
 
+    <!-- 酒单网格 -->
     <div class="drinks-grid">
       <div
         v-for="drink in drinks"
@@ -32,6 +37,7 @@
       </div>
     </div>
 
+    <!-- 调和弹窗：所选酒已被占时显示 -->
     <Transition name="modal">
       <div v-if="showMix" class="mix-modal" @click.self="cancelMix">
         <div class="mix-modal-content">
@@ -62,8 +68,10 @@
       </div>
     </Transition>
 
+    <!-- 错误提示 -->
     <div v-if="errorMsg" class="error-toast">{{ errorMsg }}</div>
 
+    <!-- 确认弹窗：选酒或调和后确认 -->
     <Transition name="modal">
       <div v-if="showConfirm" class="mix-modal" @click.self="showConfirm = false">
         <div class="mix-modal-content confirm-content">
@@ -93,22 +101,25 @@ import { useChatStore } from '../stores/chat'
 const router = useRouter()
 const chat = useChatStore()
 
-const drinks = ref([])
-const takenDrinks = ref([])
-const selectedId = ref(null)
+// ===== 响应式状态 =====
+const drinks = ref([])              // 酒单列表
+const takenDrinks = ref([])         // 已被选的酒名列表
+const selectedId = ref(null)        // 当前选中的酒 ID
 const selectedDrink = computed(() => drinks.value.find(d => d.id === selectedId.value))
-const showMix = ref(false)
-const showConfirm = ref(false)
-const mixDrink = ref(null)
-const currentDrink = ref(null)
-const confirmDisplayName = ref('')
-const isLoading = ref(true)
-const errorMsg = ref('')
+const showMix = ref(false)          // 是否显示调和弹窗
+const showConfirm = ref(false)      // 是否显示确认弹窗
+const mixDrink = ref(null)          // 调和时选中的第二种酒
+const currentDrink = ref(null)      // 最终确认的酒
+const confirmDisplayName = ref('')  // 确认弹窗中显示的名称
+const isLoading = ref(true)         // 加载状态
+const errorMsg = ref('')            // 错误提示信息
 
+// 可用于调和的酒（排除当前选中的和被占的）
 const availableMixDrinks = computed(() =>
   drinks.value.filter(d => d.id !== selectedId.value && !takenDrinks.value.includes(d.name))
 )
 
+// 页面加载时获取酒单和已选酒数据
 onMounted(async () => {
   if (!chat.sessionId) {
     router.push('/')
@@ -128,6 +139,7 @@ onMounted(async () => {
   }
 })
 
+// 选择酒：如果已被选则弹出调和弹窗，否则弹出确认弹窗
 function selectDrink(drink) {
   if (!chat.sessionId) return
   errorMsg.value = ''
@@ -150,6 +162,7 @@ function selectDrink(drink) {
   }
 }
 
+// 确认调和
 async function confirmMix() {
   if (!mixDrink.value) return
   confirmDisplayName.value = `${selectedDrink.value.name}+${mixDrink.value.name}·特调`
@@ -157,6 +170,7 @@ async function confirmMix() {
   showConfirm.value = true
 }
 
+// 确定选择并进入聊天室
 async function enterChat() {
   try {
     const mixedId = showMix.value || mixDrink.value ? mixDrink.value?.id : null
@@ -177,12 +191,14 @@ async function enterChat() {
   }
 }
 
+// 取消调和
 function cancelMix() {
   showMix.value = false
   selectedId.value = null
   mixDrink.value = null
 }
 
+// 返回首页
 function goBack() {
   chat.reset()
   router.push('/')

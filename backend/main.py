@@ -1,3 +1,6 @@
+# 暗月零点 - 后端服务
+# 基于 FastAPI 的 WebSocket 实时聊天服务器
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -6,7 +9,10 @@ import json
 import asyncio
 import threading
 
+# 创建 FastAPI 应用实例
 app = FastAPI()
+
+# 配置跨域中间件，允许所有来源的请求
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,6 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 酒单：15 种经典鸡尾酒，包含中英文名、颜色和描述
 DRINKS = [
     {"id": 1, "name": "教父", "name_en": "Godfather", "color": "#8B4513", "desc": "威士忌与杏仁酒的经典交融"},
     {"id": 2, "name": "莫吉托", "name_en": "Mojito", "color": "#90EE90", "desc": "薄荷与青柠的清凉之选"},
@@ -33,27 +40,31 @@ DRINKS = [
     {"id": 15, "name": "尼格罗尼", "name_en": "Negroni", "color": "#B22222", "desc": "金酒与甜味美思的苦甜交织"},
 ]
 
-user_drink_map: Dict[str, dict] = {}
-drink_user_map: Dict[str, str] = {}
-active_connections: List[WebSocket] = []
-ws_session_map: Dict[int, str] = {}
-chat_messages: List[dict] = []
-bar_open = True
-drink_lock = threading.Lock()
+# 全局状态
+user_drink_map: Dict[str, dict] = {}       # session_id -> 用户选择的酒信息
+drink_user_map: Dict[str, str] = {}        # 酒名 -> session_id（标记哪些酒被选了）
+active_connections: List[WebSocket] = []    # 当前活跃的 WebSocket 连接列表
+ws_session_map: Dict[int, str] = {}        # WebSocket id -> session_id 映射
+chat_messages: List[dict] = []             # 聊天消息历史，最多保留 200 条
+bar_open = True                            # 酒馆营业状态
+drink_lock = threading.Lock()              # 选酒操作的线程锁
 
 
 @app.get("/api/drinks")
 def get_drinks():
+    """获取酒单"""
     return DRINKS
 
 
 @app.get("/api/drinks/taken")
 def get_taken_drinks():
+    """获取已被选走的酒名列表"""
     return list(drink_user_map.keys())
 
 
 @app.get("/console")
 def admin_console():
+    """返回管理控制台的 HTML 页面"""
     html = r"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -123,11 +134,13 @@ refresh();
 
 @app.get("/api/admin/status")
 def admin_status():
+    """获取管理状态：营业状态和已选酒数量"""
     return {"bar_open": bar_open, "taken_count": len(drink_user_map)}
 
 
 @app.post("/api/admin/reset-drinks")
 async def admin_reset_drinks():
+    """重置所有酒杯，清空已选记录并广播系统消息"""
     drink_user_map.clear()
     for sid in list(user_drink_map.keys()):
         user_drink_map[sid]["is_mixed"] = True
@@ -144,6 +157,7 @@ async def admin_reset_drinks():
 
 @app.post("/api/admin/toggle-hours")
 async def admin_toggle_hours():
+    """切换酒馆营业/打烊状态，并广播系统消息"""
     global bar_open
     bar_open = not bar_open
     msg = "老板拉下了卷帘门，酒馆打烊了" if not bar_open else "老板推开了大门，酒馆开始营业"
@@ -160,6 +174,7 @@ async def admin_toggle_hours():
 
 @app.post("/api/join")
 def join_chat(data: dict):
+    """用户加入酒馆：选择或调和酒，返回显示名"""
     if not bar_open:
         raise HTTPException(status_code=400, detail="酒馆已打烊，请等待重新营业")
 
@@ -177,8 +192,10 @@ def join_chat(data: dict):
     display_name = drink["name"]
     is_mixed = False
 
+    # 线程安全地处理选酒逻辑
     with drink_lock:
         if mixed_drink_id:
+            # 调和模式：两种酒组合成特调
             mixed_drink = next((d for d in DRINKS if d["id"] == mixed_drink_id), None)
             if not mixed_drink:
                 raise HTTPException(status_code=400, detail="未找到调和酒")
@@ -187,6 +204,7 @@ def join_chat(data: dict):
             display_name = f"{drink['name']}+{mixed_drink['name']}·特调"
             is_mixed = True
         else:
+            # 普通选择：检查该酒是否已被他人选走
             if drink["name"] in drink_user_map:
                 raise HTTPException(status_code=400, detail="该酒已被选择，请重新选择或选择调和")
 
@@ -200,6 +218,7 @@ def join_chat(data: dict):
 
 
 def _release_drink(session_id: str):
+    """释放用户占用的酒"""
     if session_id in user_drink_map:
         keys_to_delete = [name for name, sid in drink_user_map.items() if sid == session_id]
         for name in keys_to_delete:
@@ -209,6 +228,7 @@ def _release_drink(session_id: str):
 
 @app.post("/api/leave")
 def leave_chat(data: dict):
+    """用户离开酒馆，释放其占用的酒"""
     with drink_lock:
         _release_drink(data.get("session_id", ""))
     return {"ok": True}
@@ -216,10 +236,12 @@ def leave_chat(data: dict):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket 端点：处理实时聊天的连接、收发消息和断开"""
     await websocket.accept()
     active_connections.append(websocket)
     ws_id = id(websocket)
 
+    # 发送最近 50 条消息历史
     try:
         for msg in chat_messages[-50:]:
             await websocket.send_text(json.dumps(msg, ensure_ascii=False))
@@ -237,6 +259,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 ws_session_map[ws_id] = session_id
 
             if msg_type == "chat":
+                # 处理聊天消息：广播给所有连接
                 content = msg.get("content", "").strip()
                 if not content or session_id not in user_drink_map:
                     continue
@@ -258,6 +281,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 )
 
             elif msg_type == "system":
+                # 处理系统消息：用户进入/离开
                 display_name = msg.get("display_name")
                 action = msg.get("action")
 
@@ -287,6 +311,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
     finally:
+        # 清理断开的连接及其占用的酒
         if websocket in active_connections:
             active_connections.remove(websocket)
         with drink_lock:

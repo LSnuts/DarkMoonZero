@@ -1,9 +1,15 @@
+<!-- 暗月零点 - 首页 -->
+<!-- 酒馆入口页面，包含氛围动画和进入按钮 -->
+
 <template>
   <div class="home">
+    <!-- 暗角遮罩 -->
     <div class="vignette"></div>
+    <!-- 暖色光晕 -->
     <div class="warm-glow"></div>
 
     <div class="content">
+      <!-- 装饰吊灯 -->
       <div class="lamp">
         <div class="lamp-light"></div>
       </div>
@@ -18,6 +24,7 @@
       </button>
     </div>
 
+    <!-- 飘落粒子背景 -->
     <div class="particles">
       <span v-for="n in 20" :key="n" class="particle"
         :style="{ '--delay': `${n * 0.7}s`, '--x': `${Math.random() * 100}%` }"></span>
@@ -32,6 +39,7 @@ import { useChatStore } from '../stores/chat'
 const router = useRouter()
 const chat = useChatStore()
 
+// 进入酒馆：重置状态、生成新会话 ID、跳转到选酒页
 function enterTavern() {
   chat.reset()
   chat.sessionId = chat.generateSessionId()
