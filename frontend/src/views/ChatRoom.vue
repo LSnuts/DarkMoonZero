@@ -78,7 +78,8 @@ onMounted(async () => {
 
   // 验证会话是否仍然有效（刷新页面后后端可能已清理）
   try {
-    const resp = await fetch(`/api/session/check?session_id=${chat.sessionId}`)
+    const apiRoot = import.meta.env.VITE_API_BASE || ''
+    const resp = await fetch(`${apiRoot}/api/session/check?session_id=${chat.sessionId}`)
     const data = await resp.json()
     if (!data.valid) {
       router.push('/bar')

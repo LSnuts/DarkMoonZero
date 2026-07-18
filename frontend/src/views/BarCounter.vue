@@ -131,9 +131,10 @@ onMounted(async () => {
     return
   }
   try {
+    const apiRoot = import.meta.env.VITE_API_BASE || ''
     const [drinksResp, takenResp] = await Promise.all([
-      fetch('/api/drinks'),
-      fetch('/api/drinks/taken')
+      fetch(`${apiRoot}/api/drinks`),
+      fetch(`${apiRoot}/api/drinks/taken`)
     ])
     drinks.value = await drinksResp.json()
     takenDrinks.value = await takenResp.json()

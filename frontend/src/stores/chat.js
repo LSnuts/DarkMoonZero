@@ -3,6 +3,33 @@ import { ref } from 'vue'
 
 const STORAGE_KEY = 'darkmoon_session'
 
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
+function getApiOrigin() {
+  if (API_BASE) {
+    try {
+      return new URL(API_BASE).origin
+    } catch {
+      return API_BASE.replace(/\/$/, '')
+    }
+  }
+  return `${location.protocol}//${location.host}`
+}
+
+function getWsUrl() {
+  if (API_BASE) {
+    try {
+      const url = new URL(API_BASE)
+      return `${url.protocol === 'https:' ? 'wss:' : 'ws:'}//${url.host}/ws`
+    } catch {
+      return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${API_BASE.replace(/^https?:\/\//, '').replace(/\/$/, '')}/ws`
+    }
+  }
+  return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`
+}
+
+export { API_BASE }
+
 function loadSession() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -56,9 +83,7 @@ export const useChatStore = defineStore('chat', () => {
   function connectWebSocket() {
     if (ws && ws.readyState === WebSocket.OPEN) return
 
-    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = location.host
-    ws = new WebSocket(`${protocol}//${host}/ws`)
+    ws = new WebSocket(getWsUrl())
 
     ws.onopen = () => {
       isConnected.value = true
@@ -129,7 +154,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   async function joinChat(drinkId, mixedDrinkId = null) {
-    const resp = await fetch('/api/join', {
+    const resp = await fetch(`${getApiOrigin()}/api/join`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -150,7 +175,7 @@ export const useChatStore = defineStore('chat', () => {
 
   async function leaveChat() {
     sendSystemMsg('leave')
-    await fetch('/api/leave', {
+    await fetch(`${getApiOrigin()}/api/leave`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: sessionId.value })
