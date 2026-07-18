@@ -57,7 +57,8 @@ function Start-ProcessIfAvailable {
         }
         return Start-Process -NoNewWindow -FilePath $FilePath -ArgumentList $Arguments -WorkingDirectory $WorkingDirectory -PassThru
     } catch {
-        Write-Host "  [ERROR] Failed to start $FilePath: $($_.Exception.Message)" -ForegroundColor Red
+        $errorMessage = $_.Exception.Message
+        Write-Host ("  [ERROR] Failed to start " + $FilePath + ": " + $errorMessage) -ForegroundColor Red
         return $null
     }
 }
