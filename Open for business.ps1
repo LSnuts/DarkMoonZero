@@ -84,7 +84,7 @@ if (Test-PortInUse -Port 8000) {
 
 # 启动 Cloudflare Tunnel
 Write-Host "[2/4] Starting Cloudflare Tunnel for $ApiDomain..." -ForegroundColor Cyan
-$tunnelProcess = Start-ProcessIfAvailable -FilePath "cloudflared" -Arguments @("tunnel","run","--config","$TunnelConfig") -WorkingDirectory $ScriptDir
+$tunnelProcess = Start-ProcessIfAvailable -FilePath "cloudflared" -Arguments @("tunnel","--config","$TunnelConfig","run","darkmoonzero-backend") -WorkingDirectory $ScriptDir
 Start-Sleep -Seconds 5
 if ($tunnelProcess -and $tunnelProcess.HasExited) {
     Write-Host "  [FAILED] Cloudflare Tunnel failed to start." -ForegroundColor Red
