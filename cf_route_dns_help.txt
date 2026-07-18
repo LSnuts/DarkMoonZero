@@ -1,0 +1,13 @@
+﻿NAME:
+   cloudflared tunnel route dns - HostnameRoute a hostname by creating a DNS CNAME record to a tunnel
+
+USAGE:
+   cloudflared tunnel route dns [TUNNEL] [HOSTNAME]
+
+DESCRIPTION:
+   Creates a DNS CNAME record hostname that points to the tunnel.
+
+OPTIONS:
+   --overwrite-dns, -f  Overwrites existing DNS records with this hostname (default: false) [%TUNNEL_FORCE_PROVISIONING_DNS%]
+   --help, -h           show help (default: false)
+   
