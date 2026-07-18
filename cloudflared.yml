@@ -1,0 +1,6 @@
+tunnel: darkmoonzero-backend
+credentials-file: C:\Users\ASUS\.cloudflared\65b2c497-8ae9-4675-8e95-9431aa70c9c8.json
+ingress:
+  - hostname: api.8000021.xyz
+    service: http://localhost:8000
+  - service: http_status:404
