@@ -13,6 +13,10 @@ function getApiOrigin() {
       return API_BASE.replace(/\/$/, '')
     }
   }
+  // 生产环境自动使用 api 子域名，本地开发用同域代理
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    return `${location.protocol}//api.${location.hostname}`
+  }
   return `${location.protocol}//${location.host}`
 }
 
@@ -24,6 +28,9 @@ function getWsUrl() {
     } catch {
       return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${API_BASE.replace(/^https?:\/\//, '').replace(/\/$/, '')}/ws`
     }
+  }
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//api.${location.hostname}/ws`
   }
   return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`
 }
