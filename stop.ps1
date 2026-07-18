@@ -25,15 +25,7 @@ if (Test-Path $pidFile) {
     Remove-Item $pidFile -Force
 }
 
-# 额外清理：按进程名和命令行匹配杀进程
-Get-Process -Name "python" -ErrorAction SilentlyContinue | Where-Object {
-    $_.CommandLine -match "uvicorn"
-} | Stop-Process -Force -ErrorAction SilentlyContinue
-
-Get-Process -Name "node" -ErrorAction SilentlyContinue | Where-Object {
-    $_.CommandLine -match "vite"
-} | Stop-Process -Force -ErrorAction SilentlyContinue
-
+# 仅关闭由 Open for business 启动的进程（通过 PID 文件记录）
 Write-Host "================================" -ForegroundColor DarkYellow
 Write-Host "  Bar closed. Good night." -ForegroundColor Yellow
 Write-Host "================================" -ForegroundColor DarkYellow
