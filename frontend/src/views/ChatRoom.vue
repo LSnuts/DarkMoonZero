@@ -27,8 +27,8 @@
         <!-- 系统消息居中显示 -->
         <div v-if="msg.type === 'system'" class="system-msg">{{ msg.content }}</div>
         <!-- 聊天气泡 -->
-        <div v-else class="bubble" :class="{ own: msg.display_name === chat.displayName }" :style="{ borderLeftColor: getDrinkColor(msg.display_name) }">
-          <div class="bubble-name" :style="{ color: getDrinkColor(msg.display_name) }">{{ msg.display_name }}</div>
+        <div v-else class="bubble" :class="{ own: msg.display_name === chat.displayName }" :style="{ borderLeftColor: msg.color || '#b8a888' }">
+          <div class="bubble-name" :style="{ color: msg.color || '#b8a888' }">{{ msg.display_name }}</div>
           <div class="bubble-content">{{ msg.content }}</div>
         </div>
       </template>
@@ -59,28 +59,42 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '../stores/chat'
 
 const router = useRouter()
 const chat = useChatStore()
 
-const inputText = ref('')       // 输入框内容
-const messagesRef = ref(null)   // 消息容器 DOM 引用
-const inputRef = ref(null)      // 输入框 DOM 引用
+const inputText = ref('')
+const messagesRef = ref(null)
+const inputRef = ref(null)
 
-// 页面挂载时检查会话信息，若缺失则跳回首页
-onMounted(() => {
+onMounted(async () => {
   if (!chat.sessionId || !chat.displayName) {
     router.push('/')
     return
   }
-  inputRef.value?.focus()
-})
 
-onUnmounted(() => {
-  // 不在此处重置——让用户显式点击离开按钮
+  // 验证会话是否仍然有效（刷新页面后后端可能已清理）
+  try {
+    const resp = await fetch(`/api/session/check?session_id=${chat.sessionId}`)
+    const data = await resp.json()
+    if (!data.valid) {
+      router.push('/bar')
+      return
+    }
+  } catch {
+    router.push('/')
+    return
+  }
+
+  // 连接 WebSocket 并重新宣告加入
+  chat.connectWebSocket()
+  await chat.waitForConnection()
+  chat.sendSystemMsg('join')
+
+  inputRef.value?.focus()
 })
 
 // 发送聊天消息
@@ -97,12 +111,6 @@ async function leaveAndGoBack() {
   await chat.leaveChat()
   chat.reset()
   router.push('/')
-}
-
-// 根据显示名获取对应的酒颜色
-function getDrinkColor(displayName) {
-  if (displayName === chat.displayName) return chat.drinkColor || '#d4c4a0'
-  return '#b8a888'
 }
 
 // 监听消息数量变化，自动滚动到底部

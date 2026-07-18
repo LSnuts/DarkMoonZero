@@ -125,6 +125,11 @@ onMounted(async () => {
     router.push('/')
     return
   }
+  // 如果已有会话信息（刷新页面后从 localStorage 恢复），直接跳转聊天室
+  if (chat.displayName && chat.drinkId) {
+    router.push('/chat')
+    return
+  }
   try {
     const [drinksResp, takenResp] = await Promise.all([
       fetch('/api/drinks'),
@@ -173,11 +178,12 @@ async function confirmMix() {
 // 确定选择并进入聊天室
 async function enterChat() {
   try {
-    const mixedId = showMix.value || mixDrink.value ? mixDrink.value?.id : null
+    const mixedId = mixDrink.value?.id ?? null
     await chat.joinChat(currentDrink.value.id, mixedId || null)
     chat.drinkId = currentDrink.value.id
     chat.drinkColor = currentDrink.value.color
     chat.isMixed = !!mixedId
+    chat.persist()
 
     chat.connectWebSocket()
     await chat.waitForConnection()
@@ -199,7 +205,8 @@ function cancelMix() {
 }
 
 // 返回首页
-function goBack() {
+async function goBack() {
+  await chat.leaveChat()
   chat.reset()
   router.push('/')
 }
