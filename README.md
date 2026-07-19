@@ -16,7 +16,7 @@ cd backend
 pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 18080 --reload
 
-# 启动前端 (端口 13030)
+# 启动前端 (端口 14080)
 cd frontend
 npm install
 npm run dev

@@ -8,7 +8,7 @@ import os
 
 # CORS: 本地开发 + 环境变量 FRONTEND_URL（参考 lsnuts2 方案）
 ALLOWED_ORIGINS = [
-    "http://localhost:13030", "http://127.0.0.1:13030",
+    "http://localhost:14080", "http://127.0.0.1:14080",
     "http://localhost:5173", "http://127.0.0.1:5173",
 ]
 frontend_url = os.environ.get("FRONTEND_URL")

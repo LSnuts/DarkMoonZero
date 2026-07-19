@@ -101,10 +101,10 @@ if ($tunnelProcess) {
 }
 
 # 启动本地前端（可选）
-Write-Host "[3/4] Starting frontend (port 13030)..." -ForegroundColor Cyan
+Write-Host "[3/4] Starting frontend (port 14080)..." -ForegroundColor Cyan
 $frontendProcess = $null
 if (Test-Path (Join-Path $FrontendDir "package.json")) {
-    $frontendProcess = Start-ProcessIfAvailable -FilePath "npx.cmd" -Arguments @("vite","--host","0.0.0.0","--port","13030") -WorkingDirectory $FrontendDir
+    $frontendProcess = Start-ProcessIfAvailable -FilePath "npx.cmd" -Arguments @("vite","--host","0.0.0.0","--port","14080") -WorkingDirectory $FrontendDir
     Start-Sleep -Seconds 3
     if ($frontendProcess -and $frontendProcess.HasExited) {
         Write-Host "  [WARN] Frontend failed to start. Please make sure dependencies are installed." -ForegroundColor Yellow
@@ -130,7 +130,7 @@ if ($tunnelProcess) {
     Write-Host "  Tunnel:  not started" -ForegroundColor Yellow
 }
 if ($frontendProcess) {
-    Write-Host "  Frontend: http://localhost:13030" -ForegroundColor Green
+    Write-Host "  Frontend: http://localhost:14080" -ForegroundColor Green
 } else {
     Write-Host "  Frontend: not started" -ForegroundColor Yellow
 }

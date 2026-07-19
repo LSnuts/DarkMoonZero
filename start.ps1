@@ -1,5 +1,5 @@
 ﻿# 暗月零点 - 启动脚本
-# 同时启动后端 FastAPI 服务（端口 18080）和前端 Vite 开发服务器（端口 13030）
+# 同时启动后端 FastAPI 服务（端口 18080）和前端 Vite 开发服务器（端口 14080）
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = Join-Path $ScriptDir "backend"
@@ -23,8 +23,8 @@ if ($backendProcess.HasExited) {
 Write-Host "  [OK] Backend running (PID: $($backendProcess.Id))" -ForegroundColor Green
 
 # 启动前端
-Write-Host "[2/2] Starting frontend (port 13030)..." -ForegroundColor Cyan
-$frontendProcess = Start-Process -NoNewWindow -FilePath "npx.cmd" -ArgumentList "vite --host 0.0.0.0 --port 13030" -WorkingDirectory $FrontendDir -PassThru
+Write-Host "[2/2] Starting frontend (port 14080)..." -ForegroundColor Cyan
+$frontendProcess = Start-Process -NoNewWindow -FilePath "npx.cmd" -ArgumentList "vite --host 0.0.0.0 --port 14080" -WorkingDirectory $FrontendDir -PassThru
 Start-Sleep -Seconds 3
 
 if ($frontendProcess.HasExited) {
@@ -36,7 +36,7 @@ Write-Host "  [OK] Frontend running (PID: $($frontendProcess.Id))" -ForegroundCo
 Write-Host ""
 Write-Host "================================" -ForegroundColor DarkYellow
 Write-Host "  Tavern is open!" -ForegroundColor Yellow
-Write-Host "  Frontend: http://localhost:13030" -ForegroundColor Green
+Write-Host "  Frontend: http://localhost:14080" -ForegroundColor Green
 Write-Host "  Backend:  http://localhost:18080" -ForegroundColor Green
 Write-Host "  Console:  http://localhost:18080/console" -ForegroundColor Green
 Write-Host "  Close:    .\stop.ps1" -ForegroundColor DarkYellow

@@ -7,7 +7,7 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   server: {
-    port: 13030,
+    port: 14080,
     proxy: {
       // 将前端 API 请求代理到后端 FastAPI 服务
       '/api': 'http://localhost:18080',
