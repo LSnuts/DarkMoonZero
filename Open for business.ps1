@@ -21,14 +21,14 @@ if (Test-Path $PidFile) {
 function Test-PortInUse {
     param([int]$Port)
     try {
-        return (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop) -ne $null
+        return $null -ne (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop)
     } catch {
         $netstat = netstat -ano | Select-String ":$Port\s"
-        return $netstat -ne $null
+        return $null -ne $netstat
     }
 }
 
-function Ensure-TunnelConfig {
+function New-TunnelConfig {
     param([string]$Path)
     if (-not (Test-Path $Path)) {
         $content = @"
@@ -63,7 +63,7 @@ function Start-ProcessIfAvailable {
     }
 }
 
-Ensure-TunnelConfig -Path $TunnelConfig
+New-TunnelConfig -Path $TunnelConfig
 
 # 启动后端
 Write-Host "[1/4] Starting backend (port 8000)..." -ForegroundColor Cyan
