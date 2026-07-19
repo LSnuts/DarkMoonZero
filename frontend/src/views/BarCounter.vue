@@ -54,7 +54,7 @@
               class="mix-option"
               :class="{ active: mixDrink?.id === drink.id }"
               :style="{ '--drink-color': drink.color }"
-              @click="mixDrink = drink"
+              @click="pickMixDrink(drink)"
             >
               <div class="mix-liquid" :style="{ background: drink.color }"></div>
               <span>{{ drink.name }}</span>
@@ -170,6 +170,10 @@ function selectDrink(drink) {
 }
 
 // 确认调和
+function pickMixDrink(drink) {
+  mixDrink.value = drink
+}
+
 async function confirmMix() {
   if (!mixDrink.value) return
   confirmDisplayName.value = `${selectedDrink.value.name}+${mixDrink.value.name}·特调`
@@ -180,8 +184,8 @@ async function confirmMix() {
 // 确定选择并进入聊天室
 async function enterChat() {
   try {
-    const mixedId = mixDrink.value?.id ?? null
-    await chat.joinChat(currentDrink.value.id, mixedId || null)
+    const mixedId = mixDrink.value?.id ?? null  // 先捕获，防止异步中状态变化
+    await chat.joinChat(currentDrink.value.id, mixedId)
     chat.drinkId = currentDrink.value.id
     chat.drinkColor = currentDrink.value.color
     chat.isMixed = !!mixedId
@@ -189,7 +193,6 @@ async function enterChat() {
 
     chat.connectWebSocket()
     await chat.waitForConnection()
-    chat.sendSystemMsg('join')
 
     router.push('/chat')
   } catch (e) {

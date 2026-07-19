@@ -48,6 +48,10 @@ function New-TunnelConfig {
 tunnel: darkmoonzero-backend
 credentials-file: C:\Users\ASUS\.cloudflared\65b2c497-8ae9-4675-8e95-9431aa70c9c8.json
 ingress:
+  # 管理后台仅本地可访问，公网拦截
+  - hostname: $ApiDomain
+    path: /console
+    service: http_status:403
   - hostname: $ApiDomain
     service: http://localhost:$BackendPort
   - service: http_status:404

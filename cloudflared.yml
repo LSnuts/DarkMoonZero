@@ -1,6 +1,10 @@
 tunnel: darkmoonzero-backend
 credentials-file: C:\Users\ASUS\.cloudflared\65b2c497-8ae9-4675-8e95-9431aa70c9c8.json
 ingress:
+  # 管理后台仅本地可访问，公网拦截
+  - hostname: api.8000021.xyz
+    path: /console
+    service: http_status:403
   - hostname: api.8000021.xyz
     service: http://localhost:18080
   - service: http_status:404

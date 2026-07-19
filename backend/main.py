@@ -51,6 +51,7 @@ active_connections: List[WebSocket] = []
 ws_session_map: Dict[int, str] = {}
 chat_messages: List[dict] = []
 bar_open = True
+explicitly_left: set = set()  # 已主动离开的 session，断开时不重复广播
 drink_lock = asyncio.Lock()
 connections_lock = asyncio.Lock()
 
@@ -302,11 +303,13 @@ async def websocket_endpoint(websocket: WebSocket):
                 display_name = user_info["display_name"]
 
                 if action == "join":
+                    explicitly_left.discard(session_id)
                     sys_msg = {
                         "type": "system",
                         "content": f"{display_name} 推门走进了酒馆"
                     }
                 elif action == "leave":
+                    explicitly_left.add(session_id)
                     sys_msg = {
                         "type": "system",
                         "content": f"{display_name} 离开了酒馆"
@@ -327,12 +330,14 @@ async def websocket_endpoint(websocket: WebSocket):
             if ws_id in ws_session_map:
                 sid = ws_session_map[ws_id]
                 del ws_session_map[ws_id]
-                if sid in user_drink_map:
+                # 已主动离开的不再广播"暂时离开"
+                if sid not in explicitly_left and sid in user_drink_map:
                     display_name = user_drink_map[sid].get("display_name", "")
                     if display_name:
                         leave_msg = {"type": "system", "content": f"{display_name} 暂时离开了酒馆"}
                         _push_message(leave_msg)
                         await _broadcast(leave_msg)
+                explicitly_left.discard(sid)
 
 
 if __name__ == "__main__":
