@@ -40,7 +40,7 @@ tunnel: darkmoonzero-backend
 credentials-file: C:\Users\ASUS\.cloudflared\65b2c497-8ae9-4675-8e95-9431aa70c9c8.json
 ingress:
   - hostname: $ApiDomain
-    service: http://localhost:18080
+    service: http://127.0.0.1:18080
   - service: http_status:404
 "@
         $content | Set-Content -Path $Path -Encoding UTF8
