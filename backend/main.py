@@ -4,17 +4,22 @@ from fastapi.responses import HTMLResponse
 from typing import Dict, List
 import json
 import asyncio
+import os
+
+# CORS: 本地开发 + 环境变量 FRONTEND_URL（参考 lsnuts2 方案）
+ALLOWED_ORIGINS = [
+    "http://localhost:13030", "http://127.0.0.1:13030",
+    "http://localhost:5173", "http://127.0.0.1:5173",
+]
+frontend_url = os.environ.get("FRONTEND_URL")
+if frontend_url:
+    ALLOWED_ORIGINS.append(frontend_url)
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:13030", "http://127.0.0.1:13030",
-        "http://localhost:5173", "http://127.0.0.1:5173",
-        "https://8000021.xyz",
-        "https://api.8000021.xyz",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

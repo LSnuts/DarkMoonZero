@@ -97,7 +97,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '../stores/chat'
-import { getApiOrigin } from '../stores/chat'
+import { getApiBase } from '../api'
 
 const router = useRouter()
 const chat = useChatStore()
@@ -132,7 +132,7 @@ onMounted(async () => {
     return
   }
   try {
-    const baseUrl = getApiOrigin()
+    const baseUrl = getApiBase()
     const [drinksResp, takenResp] = await Promise.all([
       fetch(`${baseUrl}/api/drinks`),
       fetch(`${baseUrl}/api/drinks/taken`)

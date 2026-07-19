@@ -1,41 +1,20 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getApiBase, getWsBase } from '../api'
 
 const STORAGE_KEY = 'darkmoon_session'
 
-const API_BASE = import.meta.env.VITE_API_BASE || ''
-
-function getApiOrigin() {
-  if (API_BASE) {
-    try {
-      return new URL(API_BASE).origin
-    } catch {
-      return API_BASE.replace(/\/$/, '')
-    }
-  }
-  // 生产环境自动使用 api 子域名，本地开发用同域代理
-  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    return `${location.protocol}//api.${location.hostname}`
-  }
-  return `${location.protocol}//${location.host}`
+function apiUrl(path) {
+  return `${getApiBase()}${path}`
 }
 
-function getWsUrl() {
-  if (API_BASE) {
-    try {
-      const url = new URL(API_BASE)
-      return `${url.protocol === 'https:' ? 'wss:' : 'ws:'}//${url.host}/ws`
-    } catch {
-      return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${API_BASE.replace(/^https?:\/\//, '').replace(/\/$/, '')}/ws`
-    }
-  }
-  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//api.${location.hostname}/ws`
-  }
-  return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`
+function wsUrl() {
+  const base = getWsBase()
+  if (base) return `${base}/ws`
+  // DEV 模式走同域 WebSocket 代理
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${location.host}/ws`
 }
-
-export { API_BASE, getApiOrigin }
 
 function loadSession() {
   try {
@@ -90,7 +69,7 @@ export const useChatStore = defineStore('chat', () => {
   function connectWebSocket() {
     if (ws && ws.readyState === WebSocket.OPEN) return
 
-    ws = new WebSocket(getWsUrl())
+    ws = new WebSocket(wsUrl())
 
     ws.onopen = () => {
       isConnected.value = true
@@ -161,7 +140,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   async function joinChat(drinkId, mixedDrinkId = null) {
-    const resp = await fetch(`${getApiOrigin()}/api/join`, {
+    const resp = await fetch(apiUrl('/api/join'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -182,7 +161,7 @@ export const useChatStore = defineStore('chat', () => {
 
   async function leaveChat() {
     sendSystemMsg('leave')
-    await fetch(`${getApiOrigin()}/api/leave`, {
+    await fetch(apiUrl('/api/leave'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: sessionId.value })

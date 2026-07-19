@@ -7,6 +7,10 @@ $FrontendDir = Join-Path $ScriptDir "frontend"
 $PidFile = Join-Path $ScriptDir ".running_pids"
 $TunnelConfig = Join-Path $ScriptDir "cloudflared.yml"
 $ApiDomain = "api.8000021.xyz"
+$FrontendDomain = "https://8000021.xyz"
+
+# 设置后端 CORS 环境变量（参考 lsnuts2 方案）
+$env:FRONTEND_URL = $FrontendDomain
 
 Write-Host "================================" -ForegroundColor DarkYellow
 Write-Host "  Dark Moon Zero" -ForegroundColor Yellow
