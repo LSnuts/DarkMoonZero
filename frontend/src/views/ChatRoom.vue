@@ -62,6 +62,7 @@
 import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '../stores/chat'
+import { getApiOrigin } from '../stores/chat'
 
 const router = useRouter()
 const chat = useChatStore()
@@ -78,8 +79,7 @@ onMounted(async () => {
 
   // 验证会话是否仍然有效（刷新页面后后端可能已清理）
   try {
-    const apiRoot = import.meta.env.VITE_API_BASE || ''
-    const resp = await fetch(`${apiRoot}/api/session/check?session_id=${chat.sessionId}`)
+    const resp = await fetch(`${getApiOrigin()}/api/session/check?session_id=${chat.sessionId}`)
     const data = await resp.json()
     if (!data.valid) {
       router.push('/bar')

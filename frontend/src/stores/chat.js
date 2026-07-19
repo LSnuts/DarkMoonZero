@@ -35,7 +35,7 @@ function getWsUrl() {
   return `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`
 }
 
-export { API_BASE }
+export { API_BASE, getApiOrigin }
 
 function loadSession() {
   try {
