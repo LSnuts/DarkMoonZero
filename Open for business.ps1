@@ -1,5 +1,5 @@
 # Open for business - 一键启动脚本
-# 启动后端、Cloudflare Tunnel、可选本地前端，并统一管理进程
+# 先杀干净旧进程，再启动后端、Cloudflare Tunnel、可选本地前端
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = Join-Path $ScriptDir "backend"
@@ -8,19 +8,28 @@ $PidFile = Join-Path $ScriptDir ".running_pids"
 $TunnelConfig = Join-Path $ScriptDir "cloudflared.yml"
 $ApiDomain = "api.8000021.xyz"
 $FrontendDomain = "https://8000021.xyz"
+$BackendPort = 18080
+$FrontendPort = 14080
 
-# 设置后端 CORS 环境变量（参考 lsnuts2 方案）
-$env:FRONTEND_URL = $FrontendDomain
-
-Write-Host "================================" -ForegroundColor DarkYellow
+# === 第一步：清理所有旧进程 ===
+Write-Host "========================================" -ForegroundColor DarkYellow
 Write-Host "  Dark Moon Zero" -ForegroundColor Yellow
 Write-Host "  Open for business..." -ForegroundColor DarkYellow
-Write-Host "================================" -ForegroundColor DarkYellow
+Write-Host "========================================" -ForegroundColor DarkYellow
 Write-Host ""
 
+Write-Host "[0/4] Cleaning up old processes..." -ForegroundColor Cyan
 if (Test-Path $PidFile) {
     Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
 }
+Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process -Name "python" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process -Name "node" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 2
+Write-Host "  [OK] Clean" -ForegroundColor Green
+
+# 设置后端 CORS 环境变量
+$env:FRONTEND_URL = $FrontendDomain
 
 function Test-PortInUse {
     param([int]$Port)
@@ -40,11 +49,11 @@ tunnel: darkmoonzero-backend
 credentials-file: C:\Users\ASUS\.cloudflared\65b2c497-8ae9-4675-8e95-9431aa70c9c8.json
 ingress:
   - hostname: $ApiDomain
-    service: http://127.0.0.1:18080
+    service: http://localhost:$BackendPort
   - service: http_status:404
 "@
         $content | Set-Content -Path $Path -Encoding UTF8
-        Write-Host "  [INFO] Created missing tunnel config: $Path" -ForegroundColor Green
+        Write-Host "  [INFO] Created tunnel config: $Path" -ForegroundColor Green
     }
 }
 
@@ -70,12 +79,12 @@ function Start-ProcessIfAvailable {
 New-TunnelConfig -Path $TunnelConfig
 
 # 启动后端
-Write-Host "[1/4] Starting backend (port 18080)..." -ForegroundColor Cyan
+Write-Host "[1/4] Starting backend (port $BackendPort)..." -ForegroundColor Cyan
 $backendProcess = $null
-if (Test-PortInUse -Port 18080) {
-    Write-Host "  [WARN] Port 18080 is already in use. Skipping backend startup." -ForegroundColor Yellow
+if (Test-PortInUse -Port $BackendPort) {
+    Write-Host "  [WARN] Port $BackendPort is already in use. Skipping backend startup." -ForegroundColor Yellow
 } else {
-    $backendProcess = Start-ProcessIfAvailable -FilePath "python" -Arguments @("-m","uvicorn","main:app","--host","127.0.0.1","--port","18080") -WorkingDirectory $BackendDir
+    $backendProcess = Start-ProcessIfAvailable -FilePath "python" -Arguments @("-m","uvicorn","main:app","--host","0.0.0.0","--port","$BackendPort") -WorkingDirectory $BackendDir
     Start-Sleep -Seconds 3
     if ($backendProcess -and $backendProcess.HasExited) {
         Write-Host "  [FAILED] Backend failed to start." -ForegroundColor Red
@@ -101,10 +110,10 @@ if ($tunnelProcess) {
 }
 
 # 启动本地前端（可选）
-Write-Host "[3/4] Starting frontend (port 14080)..." -ForegroundColor Cyan
+Write-Host "[3/4] Starting frontend (port $FrontendPort)..." -ForegroundColor Cyan
 $frontendProcess = $null
 if (Test-Path (Join-Path $FrontendDir "package.json")) {
-    $frontendProcess = Start-ProcessIfAvailable -FilePath "npx.cmd" -Arguments @("vite","--host","0.0.0.0","--port","14080") -WorkingDirectory $FrontendDir
+    $frontendProcess = Start-ProcessIfAvailable -FilePath "npx.cmd" -Arguments @("vite","--host","0.0.0.0","--port","$FrontendPort") -WorkingDirectory $FrontendDir
     Start-Sleep -Seconds 3
     if ($frontendProcess -and $frontendProcess.HasExited) {
         Write-Host "  [WARN] Frontend failed to start. Please make sure dependencies are installed." -ForegroundColor Yellow
@@ -120,7 +129,7 @@ Write-Host ""
 Write-Host "================================" -ForegroundColor DarkYellow
 Write-Host "  Open for business!" -ForegroundColor Yellow
 if ($backendProcess) {
-    Write-Host "  Backend: http://localhost:18080" -ForegroundColor Green
+    Write-Host "  Backend: http://localhost:$BackendPort" -ForegroundColor Green
 } else {
     Write-Host "  Backend: already running or skipped" -ForegroundColor Yellow
 }
@@ -130,7 +139,7 @@ if ($tunnelProcess) {
     Write-Host "  Tunnel:  not started" -ForegroundColor Yellow
 }
 if ($frontendProcess) {
-    Write-Host "  Frontend: http://localhost:14080" -ForegroundColor Green
+    Write-Host "  Frontend: http://localhost:$FrontendPort" -ForegroundColor Green
 } else {
     Write-Host "  Frontend: not started" -ForegroundColor Yellow
 }
