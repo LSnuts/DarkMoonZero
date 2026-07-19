@@ -7,13 +7,13 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   server: {
-    port: 3000,
+    port: 13030,
     proxy: {
       // 将前端 API 请求代理到后端 FastAPI 服务
-      '/api': 'http://localhost:8000',
+      '/api': 'http://localhost:18080',
       // 将 WebSocket 请求代理到后端
       '/ws': {
-        target: 'ws://localhost:8000',
+        target: 'ws://localhost:18080',
         ws: true
       }
     }

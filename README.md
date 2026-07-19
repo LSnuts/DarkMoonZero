@@ -11,12 +11,12 @@
 ## 快速开始
 
 ```bash
-# 启动后端 (端口 8000)
+# 启动后端 (端口 18080)
 cd backend
 pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 18080 --reload
 
-# 启动前端 (端口 3000)
+# 启动前端 (端口 13030)
 cd frontend
 npm install
 npm run dev
@@ -26,7 +26,7 @@ npm run dev
 
 ## 管理控制台
 
-打开 `http://localhost:8000/console` 可管理营业状态和重置酒杯。
+打开 `http://localhost:18080/console` 可管理营业状态和重置酒杯。
 
 ## 技术栈
 

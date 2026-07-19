@@ -36,7 +36,7 @@ tunnel: darkmoonzero-backend
 credentials-file: C:\Users\ASUS\.cloudflared\65b2c497-8ae9-4675-8e95-9431aa70c9c8.json
 ingress:
   - hostname: $ApiDomain
-    service: http://localhost:8000
+    service: http://localhost:18080
   - service: http_status:404
 "@
         $content | Set-Content -Path $Path -Encoding UTF8
@@ -66,12 +66,12 @@ function Start-ProcessIfAvailable {
 New-TunnelConfig -Path $TunnelConfig
 
 # 启动后端
-Write-Host "[1/4] Starting backend (port 8000)..." -ForegroundColor Cyan
+Write-Host "[1/4] Starting backend (port 18080)..." -ForegroundColor Cyan
 $backendProcess = $null
-if (Test-PortInUse -Port 8000) {
-    Write-Host "  [WARN] Port 8000 is already in use. Skipping backend startup." -ForegroundColor Yellow
+if (Test-PortInUse -Port 18080) {
+    Write-Host "  [WARN] Port 18080 is already in use. Skipping backend startup." -ForegroundColor Yellow
 } else {
-    $backendProcess = Start-ProcessIfAvailable -FilePath "python" -Arguments @("-m","uvicorn","main:app","--host","127.0.0.1","--port","8000") -WorkingDirectory $BackendDir
+    $backendProcess = Start-ProcessIfAvailable -FilePath "python" -Arguments @("-m","uvicorn","main:app","--host","127.0.0.1","--port","18080") -WorkingDirectory $BackendDir
     Start-Sleep -Seconds 3
     if ($backendProcess -and $backendProcess.HasExited) {
         Write-Host "  [FAILED] Backend failed to start." -ForegroundColor Red
@@ -97,10 +97,10 @@ if ($tunnelProcess) {
 }
 
 # 启动本地前端（可选）
-Write-Host "[3/4] Starting frontend (port 3000)..." -ForegroundColor Cyan
+Write-Host "[3/4] Starting frontend (port 13030)..." -ForegroundColor Cyan
 $frontendProcess = $null
 if (Test-Path (Join-Path $FrontendDir "package.json")) {
-    $frontendProcess = Start-ProcessIfAvailable -FilePath "npx.cmd" -Arguments @("vite","--host","0.0.0.0","--port","3000") -WorkingDirectory $FrontendDir
+    $frontendProcess = Start-ProcessIfAvailable -FilePath "npx.cmd" -Arguments @("vite","--host","0.0.0.0","--port","13030") -WorkingDirectory $FrontendDir
     Start-Sleep -Seconds 3
     if ($frontendProcess -and $frontendProcess.HasExited) {
         Write-Host "  [WARN] Frontend failed to start. Please make sure dependencies are installed." -ForegroundColor Yellow
@@ -116,7 +116,7 @@ Write-Host ""
 Write-Host "================================" -ForegroundColor DarkYellow
 Write-Host "  Open for business!" -ForegroundColor Yellow
 if ($backendProcess) {
-    Write-Host "  Backend: http://localhost:8000" -ForegroundColor Green
+    Write-Host "  Backend: http://localhost:18080" -ForegroundColor Green
 } else {
     Write-Host "  Backend: already running or skipped" -ForegroundColor Yellow
 }
@@ -126,7 +126,7 @@ if ($tunnelProcess) {
     Write-Host "  Tunnel:  not started" -ForegroundColor Yellow
 }
 if ($frontendProcess) {
-    Write-Host "  Frontend: http://localhost:3000" -ForegroundColor Green
+    Write-Host "  Frontend: http://localhost:13030" -ForegroundColor Green
 } else {
     Write-Host "  Frontend: not started" -ForegroundColor Yellow
 }
