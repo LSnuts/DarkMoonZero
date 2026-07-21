@@ -34,3 +34,5 @@ npm run dev
 |-------|-------------------------------|
 | 前端  | Vue 3 + Pinia + Vue Router + Vite |
 | 后端  | Python + FastAPI + WebSocket  |
+
+有事联系我,liusu852@yeah.net
